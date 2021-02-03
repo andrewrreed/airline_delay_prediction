@@ -81,7 +81,7 @@ tasks:
 
   - type: run_job
     entity_label: preprocess_data
-    cpu: 4
+    cpu: 2
     memory: 12
     short_summary: Running job to process raw data files
 
@@ -97,7 +97,7 @@ tasks:
 
   - type: run_job
     entity_label: train_model
-    cpu: 4
+    cpu: 2
     memory: 8
     short_summary: Run model training job.
     long_summary: >-
