@@ -118,7 +118,9 @@
 
 import os
 import sys
+import subprocess
 from pyspark.sql import SparkSession
+from pyspark.sql.utils import AnalysisException
 from pyspark.sql.types import *
 from pyspark.sql.functions import *
 
@@ -345,9 +347,21 @@ def main():
         spark.sql("show tables in default").toPandas()["tableName"]
     ):
         print(f"Creating the {hive_table} table in {hive_database}")
-        flights_data_all.write.format("parquet").mode("overwrite").saveAsTable(
-            f"{hive_table_fq}"
-        )
+
+        try:
+            flights_data_all.write.format("parquet").mode("overwrite").saveAsTable(
+                hive_table_fq
+            )
+        except AnalysisException as ae:
+            print(ae)
+            print("Removing the conflicting directory from storage location.")
+
+            conflict_location = f'{os.environ["STORAGE"]}/datalake/data/warehouse/tablespace/external/hive/{os.environ["HIVE_TABLE"]}'
+            cmd = ["hdfs", "dfs", "-rm", "-r", conflict_location]
+            subprocess.call(cmd)
+            flights_data_all.write.format("parquet").mode("overwrite").saveAsTable(
+                hive_table_fq
+            )
 
     # Show the data in the hive table
     spark.sql(f"select * from {hive_table_fq}").show()
